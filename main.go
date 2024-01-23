@@ -1,38 +1,48 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
 	tgClient "github.com/wlcmtunknwndth/gobot_manager/clients/telegram"
 	event_consumer "github.com/wlcmtunknwndth/gobot_manager/consumer/event-consumer"
 	"github.com/wlcmtunknwndth/gobot_manager/events/telegram"
-	"github.com/wlcmtunknwndth/gobot_manager/storage/files"
+	"github.com/wlcmtunknwndth/gobot_manager/storage/sqlite"
 )
 
 const (
-	batchSize   = 100
-	storagePath = "storage"
+	batchSize         = 100
+	sqliteStoragePath = "data/sqlite/storage.db"
+	host              = "api.telegram.org"
 )
 
 func main() {
+	s, err := sqlite.New(sqliteStoragePath)
+	if err != nil {
+		log.Fatal("can't coonect to storage: %w", err)
+	}
+
+	if err := s.Init(context.TODO()); err != nil {
+		log.Fatal("can't init storage: %w", err)
+	}
 
 	eventProcessor := telegram.New(
-		tgClient.New(initialCondition()),
-		files.New(storagePath),
+		tgClient.New(host, mustToken()),
+		s,
 		0,
 	)
 
 	log.Print("service started")
 
 	consumer := event_consumer.New(eventProcessor, eventProcessor, batchSize)
-	if err := consumer.Start(); err != nil {
+	if err := consumer.Start(context.TODO()); err != nil {
 		log.Fatal("service is stopped", err)
 	}
 
 }
 
-func mustToken() *string {
+func mustToken() string {
 
 	token := flag.String(
 		"token",
@@ -45,33 +55,33 @@ func mustToken() *string {
 	if *token == "" {
 		log.Fatal("Token is not specified")
 	}
-	return token
+	return *token
 }
 
-func mustHost() *string {
-	host := flag.String(
-		"host",
-		"",
-		"host for tg-bot",
-	)
-	// flag.Parse()
-	// if *host == "" {
-	// 	log.Fatal("Host is not specified")
-	// }
-	return host
-}
+// func hostFlag() *string {
+// 	host := flag.String(
+// 		"host",
+// 		"",
+// 		"host for tg-bot",
+// 	)
+// 	// flag.Parse()
+// 	// if *host == "" {
+// 	// 	log.Fatal("Host is not specified")
+// 	// }
+// 	return host
+// }
 
-func initialCondition() (string, string) {
-	host := mustHost()
-	token := mustToken()
+// func initialCondition() (string, string) {
+// 	host := hostFlag()
+// 	token := tokenFlag()
 
-	flag.Parse()
-	if *host == "" || *token == "" {
-		log.Fatal("Token or Host is not specified")
-	}
+// 	flag.Parse()
+// 	if *host == "" || *token == "" {
+// 		log.Fatal("Token or Host is not specified")
+// 	}
 
-	return *host, *token
-}
+// 	return *host, *token
+// }
 
 // func mustStoragePath() string {
 // 	path := flag.String(

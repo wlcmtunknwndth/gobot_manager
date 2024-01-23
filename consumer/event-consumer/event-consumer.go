@@ -1,6 +1,7 @@
 package event_consumer
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -21,7 +22,7 @@ func New(fetcher events.Fetcher, processor events.Processor, batchSize int) Cons
 	}
 }
 
-func (c Consumer) Start() error {
+func (c Consumer) Start(ctx context.Context) error {
 	for {
 		gotEvents, err := c.fetcher.Fetch(c.batchSize) // нужен ретрай в фетчере(3 попытки) -- экспоненциально или с конст задержкой
 		if err != nil {
@@ -33,7 +34,7 @@ func (c Consumer) Start() error {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		if err := c.handleEvents(gotEvents); err != nil {
+		if err := c.handleEvents(ctx, gotEvents); err != nil {
 			log.Print(err)
 			continue
 		}
@@ -46,12 +47,12 @@ func (c Consumer) Start() error {
 3. параллельная обработка
 */
 
-func (c *Consumer) handleEvents(events []events.Event) error {
+func (c *Consumer) handleEvents(ctx context.Context, events []events.Event) error {
 	// waitgroup: sync.WaitGroup{}
 	for _, event := range events {
 		log.Printf("got event: %s", event.Text)
 
-		if err := c.processor.Process(event); err != nil { //  можно добавить ретрай и/или бэкап
+		if err := c.processor.Process(ctx, event); err != nil { //  можно добавить ретрай и/или бэкап
 			log.Printf("can't handle event: %s", err.Error())
 			continue // network issues -- упали все события
 		}
