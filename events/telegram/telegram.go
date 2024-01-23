@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 
 	"github.com/wlcmtunknwndth/gobot_manager/clients/telegram"
@@ -54,22 +55,22 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 	return res, nil
 }
 
-func (p *Processor) Process(event events.Event) error {
+func (p *Processor) Process(ctx context.Context, event events.Event) error {
 	switch event.Type {
 	case events.Message:
-		return p.processMessage(event)
+		return p.processMessage(ctx, event)
 	default:
 		return error_handler.Wrap("can't process message", ErrUnknownEvent)
 	}
 }
 
-func (p *Processor) processMessage(event events.Event) error {
+func (p *Processor) processMessage(ctx context.Context, event events.Event) error {
 	meta, err := meta(event)
 	if err != nil {
 		return error_handler.Wrap("can't procces message", err)
 	}
 
-	if err := p.doCmd(event.Text, meta.ChatID, meta.Username); err != nil {
+	if err := p.doCmd(ctx, event.Text, meta.ChatID, meta.Username); err != nil {
 		return error_handler.Wrap("can't process message", err)
 	}
 	return nil
