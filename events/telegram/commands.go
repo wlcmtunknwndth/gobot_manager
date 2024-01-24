@@ -17,6 +17,7 @@ const (
 	StartCmd = "/start"
 )
 
+// doCmd —— checks if there a command sent by usr.
 func (p *Processor) doCmd(ctx context.Context, text string, chatID int, username string) error {
 	text = strings.TrimSpace(text)
 
@@ -107,14 +108,17 @@ func (p *Processor) sendHelp(chatID int) error {
 	return p.tg.SendMessage(chatID, msgHelp)
 }
 
+// sendHello —— Sends hello to chat
 func (p *Processor) sendHello(chatID int) error {
 	return p.tg.SendMessage(chatID, msgHello)
 }
 
+// isAddCmd —— checks if a command is for adding the page
 func isAddCmd(text string) bool {
 	return isURL(text)
 }
 
+// isURL —— checks if the string is URL
 func isURL(text string) bool {
 	u, err := url.Parse(text)
 

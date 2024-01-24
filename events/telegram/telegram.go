@@ -10,10 +10,11 @@ import (
 	"github.com/wlcmtunknwndth/gobot_manager/storage"
 )
 
+// Processor —— process events from api
 type Processor struct {
-	tg      *telegram.Client
-	offset  int
-	storage storage.Storage
+	tg      *telegram.Client // client из пакета clients
+	offset  int              // смещение, если по-русски
+	storage storage.Storage  //
 }
 
 type Meta struct {
@@ -34,6 +35,7 @@ func New(client *telegram.Client, storage storage.Storage, offset int) *Processo
 	}
 }
 
+// Fetch —— directly gains info from api and transforms it into Meta structure.
 func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 	updates, err := p.tg.Updates(p.offset, limit)
 	if err != nil {
@@ -55,6 +57,7 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 	return res, nil
 }
 
+// Process —— processes evenets and choose from appropriate action.
 func (p *Processor) Process(ctx context.Context, event events.Event) error {
 	switch event.Type {
 	case events.Message:
@@ -64,6 +67,7 @@ func (p *Processor) Process(ctx context.Context, event events.Event) error {
 	}
 }
 
+// processMessage —— processes message by doCmd func.
 func (p *Processor) processMessage(ctx context.Context, event events.Event) error {
 	meta, err := meta(event)
 	if err != nil {
@@ -76,6 +80,7 @@ func (p *Processor) processMessage(ctx context.Context, event events.Event) erro
 	return nil
 }
 
+// return meta from event.
 func meta(event events.Event) (Meta, error) {
 	res, ok := event.Meta.(Meta)
 
@@ -85,6 +90,7 @@ func meta(event events.Event) (Meta, error) {
 	return res, nil
 }
 
+// event() —— returns an event from update.
 func event(upd telegram.Update) events.Event {
 	updType := fetchType(upd)
 
@@ -103,6 +109,7 @@ func event(upd telegram.Update) events.Event {
 	return res
 }
 
+// fetchType() —— finds out type of an update.
 func fetchType(upd telegram.Update) events.Type {
 	if upd.Message == nil {
 		return events.Unknown
@@ -110,6 +117,7 @@ func fetchType(upd telegram.Update) events.Type {
 	return events.Message
 }
 
+// fetchText() —— gets text from an update.
 func fetchText(upd telegram.Update) string {
 	if upd.Message == nil {
 		return ""

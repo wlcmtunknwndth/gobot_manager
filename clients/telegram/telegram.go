@@ -11,11 +11,12 @@ import (
 	"github.com/wlcmtunknwndth/gobot_manager/lib/error_handler"
 )
 
+// Client — client to work with api.
 type Client struct {
-	host     string
-	basePath string
-	client   http.Client
-}
+	host     string      // api host-server
+	basePath string      // path to storage
+	client   http.Client // local client to work with host
+} /////
 
 const (
 	getUpdatesMethod  = "getUpdates"
@@ -32,29 +33,32 @@ func New(host, token string) *Client {
 	}
 }
 
+// newBasePath — "bot" + token.
 func newBasePath(token string) string {
-	return "bot" + token
+	return "bot" + token // https://api.telegram.org/bot123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11/
 }
 
+// Updates — get updates from host.
 func (c *Client) Updates(offset, limit int) ([]Update, error) {
-	q := url.Values{}
+	q := url.Values{} // map[string] []string for request
 
 	q.Add("offset", strconv.Itoa(offset))
 	q.Add("limit", strconv.Itoa(limit))
 
-	data, err := c.doRequest(getUpdatesMethod, q)
+	data, err := c.doRequest(getUpdatesMethod, q) // do req by a chosen command(sendMessage or getUpdates)
 	if err != nil {
 		return nil, err
 	}
 	var res UpdatesResponse
 
-	if err := json.Unmarshal(data, &res); err != nil {
+	if err := json.Unmarshal(data, &res); err != nil { //parses json
 		return nil, err
 	}
 
 	return res.Result, nil
 }
 
+// SendMessage —— sends messages to proper chat
 func (c *Client) SendMessage(chatId int, text string) error {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatId))
@@ -69,6 +73,7 @@ func (c *Client) SendMessage(chatId int, text string) error {
 	return nil
 }
 
+// doRequest —— request bt a chosend method(sendMessage or getUpdates)
 func (c *Client) doRequest(method string, query url.Values) (data []byte, err error) {
 	defer func() { err = error_handler.WrapIfErr("can't do request", err) }()
 

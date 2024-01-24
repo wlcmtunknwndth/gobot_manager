@@ -22,6 +22,7 @@ func New(fetcher events.Fetcher, processor events.Processor, batchSize int) Cons
 	}
 }
 
+// Start —— starts bot event handler
 func (c Consumer) Start(ctx context.Context) error {
 	for {
 		gotEvents, err := c.fetcher.Fetch(c.batchSize) // нужен ретрай в фетчере(3 попытки) -- экспоненциально или с конст задержкой
