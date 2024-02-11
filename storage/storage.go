@@ -6,24 +6,38 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/wlcmtunknwndth/gobot_manager/lib/error_handler"
 )
 
+const (
+	LinksTable = "links"
+	PagesTable = "pages"
+)
+
 type Storage interface {
-	Save(ctx context.Context, p *Page) error
+	//Read-adviser
+	Save(ctx context.Context, table string, p *Page) error
 	PickRandom(ctx context.Context, userName string) (*Page, error)
-	Remove(ctx context.Context, p *Page) error
-	IsExists(ctx context.Context, p *Page) (bool, error)
+	Remove(ctx context.Context, table string, id int) error
+
+	IsExists(ctx context.Context, table string, p *Page) (bool, error)
+
+	SendLinks(ctx context.Context, table, key string) (*[]Page, error)
+
+	CheckTable(table string) string
 }
 
-var ErrNoSavedPages = errors.New("no saved pages")
+var (
+	ErrNoSavedPages = errors.New("no saved pages")
+	ErrNoSavedLinks = errors.New("no saved links")
+)
 
 type Page struct {
-	URL      string
-	UserName string
-	Created  time.Time
+	ID   uint32
+	URL  string
+	Name string
+	// Created  time.Time
 }
 
 func (p Page) Hash() (string, error) {
@@ -32,7 +46,7 @@ func (p Page) Hash() (string, error) {
 		return "", error_handler.Wrap("can't calculate hash", err)
 	}
 
-	if _, err := io.WriteString(h, p.UserName); err != nil {
+	if _, err := io.WriteString(h, p.Name); err != nil {
 		return "", error_handler.Wrap("can't calculate hash", err)
 	}
 

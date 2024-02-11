@@ -74,7 +74,7 @@ func (p *Processor) processMessage(ctx context.Context, event events.Event) erro
 		return error_handler.Wrap("can't procces message", err)
 	}
 
-	if err := p.doCmd(ctx, event.Text, meta.ChatID, meta.Username); err != nil {
+	if err := p.doCmd(ctx, event.Text, meta.ChatID); err != nil {
 		return error_handler.Wrap("can't process message", err)
 	}
 	return nil

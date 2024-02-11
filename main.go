@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
-	"flag"
+	// "flag"
 	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	tgClient "github.com/wlcmtunknwndth/gobot_manager/clients/telegram"
 	event_consumer "github.com/wlcmtunknwndth/gobot_manager/consumer/event-consumer"
 	"github.com/wlcmtunknwndth/gobot_manager/events/telegram"
@@ -17,7 +19,16 @@ const (
 	host              = "api.telegram.org"
 )
 
+func init() {
+	if err := godotenv.Load("data.env"); err != nil {
+		log.Print("No .env file found")
+	}
+	log.Print(".env found")
+}
+
 func main() {
+	// os.Setenv("token", "")
+	// os.Setenv("chatID", "436447671")
 	s, err := sqlite.New(sqliteStoragePath)
 	if err != nil {
 		log.Fatal("can't coonect to storage: %w", err)
@@ -27,12 +38,16 @@ func main() {
 		log.Fatal("can't init storage: %w", err)
 	}
 
+	token, ok := os.LookupEnv("token")
+	if !ok {
+		log.Fatal("No .env var found")
+	}
+
 	eventProcessor := telegram.New(
-		tgClient.New(host, mustToken()),
+		tgClient.New(host, token),
 		s,
 		0,
 	)
-
 	log.Print("service started")
 
 	consumer := event_consumer.New(eventProcessor, eventProcessor, batchSize)
@@ -42,21 +57,21 @@ func main() {
 
 }
 
-func mustToken() string {
+// func mustToken() string {
 
-	token := flag.String(
-		"token",
-		"",
-		"token for access to tg-bot",
-	)
+// 	token := flag.String(
+// 		"token",
+// 		"",
+// 		"token for access to tg-bot",
+// 	)
 
-	flag.Parse()
+// 	flag.Parse()
 
-	if *token == "" {
-		log.Fatal("Token is not specified")
-	}
-	return *token
-}
+// 	if *token == "" {
+// 		log.Fatal("Token is not specified")
+// 	}
+// 	return *token
+// }
 
 // func hostFlag() *string {
 // 	host := flag.String(
